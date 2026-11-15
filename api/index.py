@@ -30,9 +30,10 @@ ALL_REVIEWS_DF = None
 
 def get_data_path() -> str:
     candidates = [
-        os.path.join(os.path.dirname(__file__), "..", "data", "reviews.csv"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "reviews.csv"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "reviews.csv"),
         os.path.join(os.getcwd(), "data", "reviews.csv"),
-        os.path.join(os.path.dirname(__file__), "data", "reviews.csv"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "reviews.csv"),
         "data/reviews.csv"
     ]
     for path in candidates:
@@ -290,61 +291,76 @@ def get_reviews(
     max_rating: int = 2,
     limit: int = 20
 ):
-    if ALL_REVIEWS_DF is None:
-        initialize_data()
+    try:
+        if ALL_REVIEWS_DF is None:
+            initialize_data()
 
-    df = ALL_REVIEWS_DF[ALL_REVIEWS_DF["Rating"] <= max_rating]
+        max_rating = max(1, min(5, int(max_rating)))
+        limit = max(1, min(100, int(limit)))
 
-    if department and department != "All":
-        df = df[df["Department Name"] == department]
+        df = ALL_REVIEWS_DF[ALL_REVIEWS_DF["Rating"] <= max_rating]
 
-    if cause:
-        c = cause.lower()
-        if c == "small":
-            df = df[df["cause_small"]]
-        elif c == "large":
-            df = df[df["cause_large"]]
-        elif c == "proportion":
-            df = df[df["cause_prop"]]
-        elif c == "return":
-            df = df[df["cause_return"]]
+        if department and department != "All":
+            df = df[df["Department Name"] == department]
 
-    if search and search.strip():
-        q = search.strip().lower()
-        df = df[df["Full_Text"].str.contains(q, na=False)]
+        if cause:
+            c = cause.lower()
+            if c == "small":
+                df = df[df["cause_small"]]
+            elif c == "large":
+                df = df[df["cause_large"]]
+            elif c == "proportion":
+                df = df[df["cause_prop"]]
+            elif c == "return":
+                df = df[df["cause_return"]]
 
-    records = []
-    for _, row in df.head(min(limit, 100)).iterrows():
-        badges = []
-        if row["cause_small"]:
-            badges.append("Runs Small / Tight")
-        if row["cause_large"]:
-            badges.append("Runs Large / Baggy")
-        if row["cause_prop"]:
-            badges.append("Proportion / Length")
-        if row["cause_return"]:
-            badges.append("Return Triggered")
+        if search and search.strip():
+            q = search.strip().lower()
+            df = df[df["Full_Text"].str.contains(q, regex=False, na=False)]
 
-        if not badges:
-            badges.append("General Fit Mismatch")
+        total_matching = len(df)
+        records = []
+        for _, row in df.head(limit).iterrows():
+            badges = []
+            if row["cause_small"]:
+                badges.append("Runs Small / Tight")
+            if row["cause_large"]:
+                badges.append("Runs Large / Baggy")
+            if row["cause_prop"]:
+                badges.append("Proportion / Length")
+            if row["cause_return"]:
+                badges.append("Return Triggered")
 
-        records.append({
-            "clothing_id": int(row["Clothing ID"]) if pd.notna(row["Clothing ID"]) else None,
-            "title": str(row["Title"]) if pd.notna(row["Title"]) and str(row["Title"]).strip() else "Customer Review",
-            "body": str(row["Review Text"]) if pd.notna(row["Review Text"]) else "No review text provided.",
-            "rating": int(row["Rating"]),
-            "department": str(row["Department Name"]) if pd.notna(row["Department Name"]) else "Unspecified",
-            "class_name": str(row["Class Name"]) if pd.notna(row["Class Name"]) else "Unspecified",
-            "age": int(row["Age"]) if pd.notna(row["Age"]) else "N/A",
-            "helpful": int(row["Positive Feedback Count"]) if pd.notna(row["Positive Feedback Count"]) else 0,
-            "badges": badges
+            if not badges:
+                badges.append("General Fit Mismatch")
+
+            records.append({
+                "clothing_id": int(row["Clothing ID"]) if pd.notna(row["Clothing ID"]) else None,
+                "title": str(row["Title"]) if pd.notna(row["Title"]) and str(row["Title"]).strip() else "Customer Review",
+                "body": str(row["Review Text"]) if pd.notna(row["Review Text"]) else "No review text provided.",
+                "rating": int(row["Rating"]),
+                "department": str(row["Department Name"]) if pd.notna(row["Department Name"]) else "Unspecified",
+                "class_name": str(row["Class Name"]) if pd.notna(row["Class Name"]) else "Unspecified",
+                "age": int(row["Age"]) if pd.notna(row["Age"]) else "N/A",
+                "helpful": int(row["Positive Feedback Count"]) if pd.notna(row["Positive Feedback Count"]) else 0,
+                "badges": badges
+            })
+
+        return JSONResponse(content={
+            "total_matching": total_matching,
+            "limit": limit,
+            "reviews": records
         })
-
-    return JSONResponse(content={
-        "total_matching": len(df),
-        "limit": limit,
-        "reviews": records
-    })
+    except Exception as e:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "total_matching": 0,
+                "limit": limit,
+                "reviews": [],
+                "error": str(e)
+            }
+        )
 
 # -----------------------------------------------------------------------------
 # HTML SPA Dashboard (Tailwind CSS + Chart.js)
@@ -830,6 +846,8 @@ def serve_dashboard():
   <script>
     const metricsData = {metrics_json};
 
+    window.charts = {{}};
+
     // Tab Switching
     function switchTab(tabId) {{
       for (let i = 1; i <= 3; i++) {{
@@ -843,6 +861,11 @@ def serve_dashboard():
           content.classList.add('hidden');
         }}
       }}
+      setTimeout(() => {{
+        Object.values(window.charts || {{}}).forEach(c => {{
+          try {{ c.resize(); }} catch(e) {{}}
+        }});
+      }}, 60);
       if (tabId === 2 && !window.reviewsLoaded) {{
         fetchReviews();
       }}
@@ -857,7 +880,7 @@ def serve_dashboard():
     function renderCharts() {{
       // Chart 1: Department Negative Rate
       const depts = metricsData.departments || [];
-      new Chart(document.getElementById('chart-dept'), {{
+      window.charts['dept'] = new Chart(document.getElementById('chart-dept'), {{
         type: 'bar',
         data: {{
           labels: depts.map(d => d.department),
@@ -898,7 +921,7 @@ def serve_dashboard():
 
       // Chart 2: Age Cohorts
       const cohorts = metricsData.age_cohorts || [];
-      new Chart(document.getElementById('chart-cohort'), {{
+      window.charts['cohort'] = new Chart(document.getElementById('chart-cohort'), {{
         data: {{
           labels: cohorts.map(c => c.cohort),
           datasets: [
@@ -955,7 +978,7 @@ def serve_dashboard():
 
       // Chart 3: Star Rating Distribution
       const dist = metricsData.rating_distribution || [];
-      new Chart(document.getElementById('chart-ratings'), {{
+      window.charts['ratings'] = new Chart(document.getElementById('chart-ratings'), {{
         type: 'bar',
         data: {{
           labels: dist.map(d => d.rating + ' ★'),
@@ -993,7 +1016,7 @@ def serve_dashboard():
 
       // Chart 4: Root Cause Donut
       const rc = metricsData.root_causes || {{}};
-      new Chart(document.getElementById('chart-donut'), {{
+      window.charts['donut'] = new Chart(document.getElementById('chart-donut'), {{
         type: 'doughnut',
         data: {{
           labels: ['Runs Small / Tight', 'Runs Large / Baggy', 'Proportion / Length'],
@@ -1018,7 +1041,7 @@ def serve_dashboard():
 
       // Chart 5: Stacked Classes Breakdown
       const classes = metricsData.top_classes || [];
-      new Chart(document.getElementById('chart-classes'), {{
+      window.charts['classes'] = new Chart(document.getElementById('chart-classes'), {{
         type: 'bar',
         data: {{
           labels: classes.map(c => c.class_name),

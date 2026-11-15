@@ -135,6 +135,34 @@ streamlit run app.py
 ```
 Open your browser at `http://localhost:8501` to access the 3 interactive tabs.
 
+### 6. Run FastAPI Serverless App Locally (Vercel Mode)
+You can also run the high-performance FastAPI backend & single-page application locally:
+```bash
+uvicorn api.index:app --reload --port 8000
+```
+Open your browser at `http://localhost:8000` for the full Tailwind CSS + Chart.js SPA dashboard, or query the REST endpoints:
+* `GET /api/metrics`: Full catalog KPIs, department breakdowns, age cohorts, and root causes JSON.
+* `GET /api/reviews?department=Dresses&cause=small`: Filtered negative review explorer JSON.
+
+---
+
+## 🌐 Deploy to Vercel (1-Click Serverless)
+
+This repository is pre-configured with `vercel.json` and `@vercel/python` serverless functions for 1-click zero-config deployment.
+
+### Option A: Via GitHub & Vercel Dashboard (Recommended)
+1. Push this repository to your GitHub account (`https://github.com/Charan-Kadamati/fashion-size-fit-analysis`).
+2. Log into [vercel.com](https://vercel.com) and click **"Add New Project"** $\rightarrow$ **"Import"** from GitHub.
+3. Keep default settings (`Build Command`: None, `Output Directory`: None).
+4. Click **Deploy**. Vercel will automatically package `api/index.py` as a serverless function and route all traffic (`/(.*)`) directly to the interactive app!
+
+### Option B: Via Vercel CLI
+```bash
+npm install -g vercel
+vercel login
+vercel --prod
+```
+
 ---
 
 ## 💻 SQL Analysis Highlights (`sql/analysis_queries.sql`)

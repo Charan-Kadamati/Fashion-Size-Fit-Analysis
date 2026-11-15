@@ -1,6 +1,7 @@
 pandas
-streamlit
-plotly
 numpy
 requests
-
+fastapi
+uvicorn
+streamlit
+plotly

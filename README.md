@@ -7,6 +7,8 @@
 [![SQLite](https://img.shields.io/badge/SQLite-In--Memory%20Analytics-003B57.svg)](https://www.sqlite.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+🌐 **Live Interactive Dashboard:** https://fashion-size-fit-analysis.vercel.app/
+
 An end-to-end Product Analytics & Product Management (PM) case study analyzing **23,486 customer reviews** from the Women's E-Commerce Clothing dataset. This project quantifies the business impact of sizing uncertainty, pinpoints category and demographic vulnerability, and presents a comprehensive Product Requirements Document (PRD) and interactive Streamlit decision dashboard for a **"Smart Size & Fit Guidance"** PDP module.
 
 ---
@@ -45,22 +47,19 @@ While the e-commerce platform exhibits an overall healthy **4.20 / 5.00** rating
 
 ![Root-Cause Deep Dive](assets/02_root_cause_deepdive.png)
 
-#### Searchable Customer Voice & Review Explorer
+---
+
+### Searchable Customer Voice & Review Explorer
 *Inspect real customer reviews with dynamic root cause pills and return trigger flags.*
 
-![Customer Review Explorer](assets/04_customer_review_explorer.png)
+![Customer Review Explorer](assets/03_customer_review_explorer.png)
 
 ---
 
-### Tab 3: Product Solution & A/B Experiment Simulator
-*Interactive ROI model quantifying avoided return packages, reverse logistics cost savings, and retained merchandise value.*
+### Tab 3: Product Proposal & A/B Experiment Simulator
+*Interactive ROI model quantifying avoided return packages, reverse logistics cost savings, retained merchandise value, and PRD specifications.*
 
-![Product Solution Simulator](assets/03_product_proposal_simulator.png)
-
-#### Integrated Product Requirements Document (PRD) Specifications
-*Embedded functional requirements matrix (P0/P1), user personas, and 4-week A/B testing roadmap with statistical power analysis.*
-
-![PRD Specifications & Roadmap](assets/05_prd_experiment_roadmap.png)
+![Product Solution Simulator](assets/04_product_proposal_simulator.png)
 
 ---
 
@@ -71,9 +70,8 @@ fashion-size-fit-analysis/
 ├── assets/                       # High-resolution application screenshots
 │   ├── 01_executive_kpi_overview.png
 │   ├── 02_root_cause_deepdive.png
-│   ├── 03_product_proposal_simulator.png
-│   ├── 04_customer_review_explorer.png
-│   └── 05_prd_experiment_roadmap.png
+│   ├── 03_customer_review_explorer.png
+│   └── 04_product_proposal_simulator.png
 ├── data/
 │   └── reviews.csv               # 23,486 verified clothing reviews (auto-downloaded)
 ├── sql/
